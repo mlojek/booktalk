@@ -11,10 +11,8 @@ dependencies = [
     "black",
     "faiss-cpu",
     "isort",
-    "pre-commit",
     "pylint",
     "pyprojectsort",
-    "pytest",
     "setuptools",
     "typing",
 ]
