@@ -7,10 +7,10 @@ from pathlib import Path
 import ebooklib
 from bs4 import BeautifulSoup
 from ebooklib import epub
+from langchain_core.documents import Document
 
 
-# TODO return a Document object with metadata
-def read_epub_book(path: Path) -> str:
+def read_epub_book(path: Path) -> Document:
     """
     Read an epub book from a given file. Returns cleaned text as one string.
 
@@ -18,7 +18,7 @@ def read_epub_book(path: Path) -> str:
         path (Path): Path to an EPUB file.
 
     Returns:
-        str: Cleaned contents of the book.
+        Document: A langchain document with the contents of the book.
     """
     book = epub.read_epub(path)
 
@@ -36,4 +36,10 @@ def read_epub_book(path: Path) -> str:
     for anchor in soup.find_all("a"):
         anchor.decompose()
 
-    return soup.get_text()
+    book_contents = soup.get_text()
+    book_title = book.get_metadata("DC", "title")[0][0]
+    book_author = book.get_metadata("DC", "creator")[0][0]
+
+    return Document(
+        page_content=book_contents, metadata={"author": book_author}, id=book_title
+    )
