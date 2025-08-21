@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 from ebooklib import epub
 
 
+# TODO return a Document object with metadata
 def read_epub_book(path: Path) -> str:
     """
     Read an epub book from a given file. Returns cleaned text as one string.
