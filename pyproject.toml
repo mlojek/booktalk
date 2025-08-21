@@ -15,11 +15,14 @@ dependencies = [
     "isort",
     "langchain",
     "langchain-chroma",
+    "langchain-community",
     "langchain-ollama",
     "pylint",
+    "pypandoc",
     "pyprojectsort",
     "setuptools",
     "typing",
+    "unstructured",
 ]
 description = "Interact with books like never before with RAG-powered chatbot."
 name = "booktalk"
