@@ -33,7 +33,6 @@ def read_epub_book(path: Path) -> str:
 
     # also remove all anchors to remove the footnote numbers from text
     for anchor in soup.find_all("a"):
-        print(anchor)
         anchor.decompose()
 
     return soup.get_text()
