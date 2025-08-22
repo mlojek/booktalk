@@ -6,12 +6,15 @@ import tempfile
 import time
 
 import streamlit as st
+from langchain.vectorstores.base import VectorStoreRetriever
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import UnstructuredEPubLoader
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables.base import RunnableSequence
 from langchain_ollama import OllamaEmbeddings
 from langchain_ollama.llms import OllamaLLM
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from streamlit.runtime.uploaded_file_manager import UploadedFile
 from streamlit.web import cli
 
 
@@ -24,28 +27,46 @@ def main():
 
 
 @st.cache_resource
-def load_and_vectorize_book(book_bytes: str):
-    # Save to a temp file
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".epub") as tmp:
-        tmp.write(book_bytes.getbuffer())
-        tmp_path = tmp.name
+def load_and_vectorize_book(book_bytes: UploadedFile) -> VectorStoreRetriever:
+    """
+    Given a book read from the streamlit GUI, load it into ChromaDB vector store
+    and return a retriever object.
+
+    Args:
+        book_bytes (UploadedFile): An Epub file read from the disk. The UploadedFile
+            extends BytesIO type and can be treated as a file handle.
+
+    Returns:
+        VectorStoreRetriever: Chroma object retriever for RAG usage.
+    """
+    # save the uploaded file to a temporary file so it can be read by langchain
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".epub") as tmp_file:
+        tmp_file.write(book_bytes.getbuffer())
+        tmp_path = tmp_file.name
 
     # load the book, chunk it and load into chroma DB
     book = UnstructuredEPubLoader(tmp_path).load()
+
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=500)
     book_chunks = text_splitter.split_documents(book)
+
     vector_database = Chroma.from_documents(
         documents=book_chunks,
         collection_name="book",
         embedding=OllamaEmbeddings(model="mxbai-embed-large"),
     )
-    chroma_retriever = vector_database.as_retriever()
 
-    return chroma_retriever
+    return vector_database.as_retriever()
 
 
 @st.cache_resource
-def initialize_llm_chain():
+def initialize_llm_chain() -> RunnableSequence:
+    """
+    Create a LLM chain using a prompt template and Ollama LLM.
+
+    Returns:
+        RunnableSequence: A runnable LLM chain.
+    """
     # create a prompt template and LLM chain
     model = OllamaLLM(model="llama3.2")
     prompt = ChatPromptTemplate.from_template(
@@ -53,6 +74,7 @@ def initialize_llm_chain():
         You are a helpful literature expert, which helps people with understanding books.
         Please act like you had been given the entire book, not only fragments.
         Also please avoid giving your answer as a one, continous block of text.
+        Instead, try to split your answer into a few paragraphs.
         Here are some relevant fragments from the book: {fragments}.
         Here is the user's question: {question}.
         """
