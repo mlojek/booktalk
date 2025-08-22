@@ -21,6 +21,7 @@ dependencies = [
     "pypandoc",
     "pyprojectsort",
     "setuptools",
+    "streamlit",
     "typing",
     "unstructured",
 ]
