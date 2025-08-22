@@ -7,5 +7,18 @@ Now, back then LLMs were not a thing yet, but If I had to learn for my literatur
 
 So guess what? I made one!
 
-# Tech stack
-This project is made using `python`. I used `Ollama` to host LLMs locally so that I don't have to pay for OpenAI's API. Vector storage for RAG is done using `ChromaDB`. The project's logic is done in `LangChain`. I've also added a simple web GUI with `Streamlit`.
+## Tech stack
+This project is made using `python`. I used `Ollama` to host LLMs locally so that I don't have to pay for OpenAI's API. Vector storage for RAG is done using `ChromaDB`. The project's logic is done in `LangChain`. I've also added an elegant and user-friendly web GUI with `Streamlit`.
+
+## Installation
+This project requires you to have Ollama installed and running on your system. Use python 3.11 or newer.
+```
+make install
+```
+Then to run the app run:
+```
+booktalk
+```
+
+## Where to get EPUBs
+Get free public domain EPUBs from the gutenberg project
