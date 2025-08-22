@@ -44,7 +44,6 @@ def load_and_vectorize_book(book_bytes: UploadedFile) -> VectorStoreRetriever:
         tmp_file.write(book_bytes.getbuffer())
         tmp_path = tmp_file.name
 
-    # load the book, chunk it and load into chroma DB
     book = UnstructuredEPubLoader(tmp_path).load()
 
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=500)
@@ -67,7 +66,6 @@ def initialize_llm_chain() -> RunnableSequence:
     Returns:
         RunnableSequence: A runnable LLM chain.
     """
-    # create a prompt template and LLM chain
     model = OllamaLLM(model="llama3.2")
     prompt = ChatPromptTemplate.from_template(
         """
@@ -85,28 +83,35 @@ def initialize_llm_chain() -> RunnableSequence:
 
 
 if __name__ == "__main__":
+    st.title('Booktalk')
+    st.write("Don't want to read books? Let this AI chatbot explain them to you instead!")
+
+    # read user-provided epub book
     book_bytes = st.file_uploader("Drop in your book in epub format.", type="epub")
 
     if book_bytes:
+        # load the book into ChromaDB vector store
         chroma_retriever = load_and_vectorize_book(book_bytes)
 
+        # init LLM chain
         chain = initialize_llm_chain()
 
-        # Initialize chat history
+        # init chat history
         if "messages" not in st.session_state:
             st.session_state.messages = [
-                {"role": "assistant", "content": "Let's start chatting! 👇"}
+                {"role": "assistant", "content": "Hi, let's talk about your book!",},
             ]
 
-        # Display chat messages from history on app rerun
+        # display chat messages from history on app rerun
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
-        # Accept user input
-        if prompt := st.chat_input("What is up?"):
+        # accept question from the user
+        if prompt := st.chat_input("Ask me about the book."):
             # Add user message to chat history
             st.session_state.messages.append({"role": "user", "content": prompt})
+
             # Display user message in chat message container
             with st.chat_message("user"):
                 st.markdown(prompt)
@@ -122,6 +127,7 @@ if __name__ == "__main__":
                         "question": prompt,
                     }
                 )
+                
                 # Simulate stream of response with milliseconds delay
                 for chunk in assistant_response.split():
                     full_response += chunk + " "
@@ -129,6 +135,7 @@ if __name__ == "__main__":
                     # Add a blinking cursor to simulate typing
                     message_placeholder.markdown(full_response + "▌")
                 message_placeholder.markdown(full_response)
+
             # Add assistant response to chat history
             st.session_state.messages.append(
                 {"role": "assistant", "content": full_response}
