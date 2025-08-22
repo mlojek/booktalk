@@ -2,47 +2,33 @@
 Entrypoint script for the booktalk project.
 """
 
-import argparse
-from pathlib import Path
+import tempfile
+import time
 
+import streamlit as st
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import UnstructuredEPubLoader
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_ollama import OllamaEmbeddings
 from langchain_ollama.llms import OllamaLLM
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from streamlit.web import cli
 
 
 def main():
-    """
-    Entrypoint function for the booktalk project.
-    This function is called when booktalk is ran from CLI.
-    """
-    parser = argparse.ArgumentParser(
-        prog="booktalk",
-        description="Run an interactive chat with AI to better understand a book.",
-    )
-    parser.add_argument(
-        "book_path",
-        type=Path,
-        help="Path to an EPUB book.",
-    )
-    parser.add_argument(
-        "--model",
-        type=str,
-        help="Ollama LLM model to use (default: llama3.2).",
-        default="llama3.2",
-    )
-    parser.add_argument(
-        "--num_fragments",
-        type=int,
-        help="Number of relevant book fragment to use in RAG (default: 10).",
-        default=10,
-    )
-    args = parser.parse_args()
+    cli.main_run(["src/booktalk/__main__.py"])
+
+
+if __name__ == "__main__":
+    book_bytes = st.file_uploader("Drop in your book in epub format.", type="epub")
+
+    # Save to a temp file
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".epub") as tmp:
+        tmp.write(book_bytes.getbuffer())
+        tmp_path = tmp.name
 
     # load the book, chunk it and load into chroma DB
-    book = UnstructuredEPubLoader(args.book_path).load()
+    book = UnstructuredEPubLoader(tmp_path).load()
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=500)
     book_chunks = text_splitter.split_documents(book)
     vector_database = Chroma.from_documents(
@@ -53,7 +39,7 @@ def main():
     chroma_retriever = vector_database.as_retriever()
 
     # create a prompt template and LLM chain
-    model = OllamaLLM(model=args.model)
+    model = OllamaLLM(model="llama3.2")
     prompt = ChatPromptTemplate.from_template(
         """
         You are a helpful literature expert, which helps people with understanding books.
@@ -63,20 +49,44 @@ def main():
     )
     chain = prompt | model
 
-    # in loop get the question from user and answer it using relevant context
-    while True:
-        question = input("Type your question (or q to quit): ")
+    # Initialize chat history
+    if "messages" not in st.session_state:
+        st.session_state.messages = [
+            {"role": "assistant", "content": "Let's start chatting! 👇"}
+        ]
 
-        if question == "q":
-            break
+    # Display chat messages from history on app rerun
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
-        fragments = chroma_retriever.invoke(question, k=args.num_fragments)
+    # Accept user input
+    if prompt := st.chat_input("What is up?"):
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        # Display user message in chat message container
+        with st.chat_message("user"):
+            st.markdown(prompt)
 
-        answer = chain.invoke(
-            {
-                "fragments": fragments,
-                "question": question,
-            }
+        # Display assistant response in chat message container
+        with st.chat_message("assistant"):
+            message_placeholder = st.empty()
+            full_response = ""
+            fragments = chroma_retriever.invoke(prompt, k=10)
+            assistant_response = chain.invoke(
+                {
+                    "fragments": fragments,
+                    "question": prompt,
+                }
+            )
+            # Simulate stream of response with milliseconds delay
+            for chunk in assistant_response.split():
+                full_response += chunk + " "
+                time.sleep(0.05)
+                # Add a blinking cursor to simulate typing
+                message_placeholder.markdown(full_response + "▌")
+            message_placeholder.markdown(full_response)
+        # Add assistant response to chat history
+        st.session_state.messages.append(
+            {"role": "assistant", "content": full_response}
         )
-
-        print("\n", answer, "\n")
