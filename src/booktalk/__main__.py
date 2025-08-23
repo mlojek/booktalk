@@ -130,7 +130,7 @@ if __name__ == "__main__":
             # Display assistant response in chat message container
             with st.chat_message("assistant"):
                 message_placeholder = st.empty()
-                full_response = ""
+                full_response = ""  # pylint: disable=invalid-name
                 fragments = chroma_retriever.invoke(prompt, k=10)
                 assistant_response = chain.invoke(
                     {
