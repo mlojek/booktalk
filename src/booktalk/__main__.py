@@ -83,11 +83,16 @@ def initialize_llm_chain() -> RunnableSequence:
 
 
 if __name__ == "__main__":
-    st.title('Booktalk')
-    st.write("Don't want to read books? Let this AI chatbot explain them to you instead!")
+    st.title("Booktalk")
+    st.write(
+        "Don't want to read books? Let this AI chatbot explain them to you instead!"
+    )
 
     # read user-provided epub book
-    book_bytes = st.file_uploader("Drop in your book in epub format.", type="epub")
+    book_bytes = st.file_uploader(
+        "Drop in your book in epub format.",
+        type="epub",
+    )
 
     if book_bytes:
         # load the book into ChromaDB vector store
@@ -99,7 +104,10 @@ if __name__ == "__main__":
         # init chat history
         if "messages" not in st.session_state:
             st.session_state.messages = [
-                {"role": "assistant", "content": "Hi, let's talk about your book!",},
+                {
+                    "role": "assistant",
+                    "content": "Hi, let's talk about your book!",
+                },
             ]
 
         # display chat messages from history on app rerun
@@ -110,7 +118,12 @@ if __name__ == "__main__":
         # accept question from the user
         if prompt := st.chat_input("Ask me about the book."):
             # Add user message to chat history
-            st.session_state.messages.append({"role": "user", "content": prompt})
+            st.session_state.messages.append(
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            )
 
             # Display user message in chat message container
             with st.chat_message("user"):
@@ -127,16 +140,20 @@ if __name__ == "__main__":
                         "question": prompt,
                     }
                 )
-                
+
                 # Simulate stream of response with milliseconds delay
                 for chunk in assistant_response.split():
                     full_response += chunk + " "
                     time.sleep(0.05)
+                    
                     # Add a blinking cursor to simulate typing
                     message_placeholder.markdown(full_response + "▌")
                 message_placeholder.markdown(full_response)
 
             # Add assistant response to chat history
             st.session_state.messages.append(
-                {"role": "assistant", "content": full_response}
+                {
+                    "role": "assistant",
+                    "content": full_response,
+                }
             )
