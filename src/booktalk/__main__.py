@@ -27,13 +27,13 @@ def main():
 
 
 @st.cache_resource
-def load_and_vectorize_book(book_bytes: UploadedFile) -> VectorStoreRetriever:
+def load_and_vectorize_book(uploaded_book: UploadedFile) -> VectorStoreRetriever:
     """
     Given a book read from the streamlit GUI, load it into ChromaDB vector store
     and return a retriever object.
 
     Args:
-        book_bytes (UploadedFile): An Epub file read from the disk. The UploadedFile
+        uploaded_book (UploadedFile): An Epub file read from the disk. The UploadedFile
             extends BytesIO type and can be treated as a file handle.
 
     Returns:
@@ -41,7 +41,7 @@ def load_and_vectorize_book(book_bytes: UploadedFile) -> VectorStoreRetriever:
     """
     # save the uploaded file to a temporary file so it can be read by langchain
     with tempfile.NamedTemporaryFile(delete=False, suffix=".epub") as tmp_file:
-        tmp_file.write(book_bytes.getbuffer())
+        tmp_file.write(uploaded_book.getbuffer())
         tmp_path = tmp_file.name
 
     book = UnstructuredEPubLoader(tmp_path).load()
@@ -67,7 +67,7 @@ def initialize_llm_chain() -> RunnableSequence:
         RunnableSequence: A runnable LLM chain.
     """
     model = OllamaLLM(model="llama3.2")
-    prompt = ChatPromptTemplate.from_template(
+    prompt_template = ChatPromptTemplate.from_template(
         """
         You are a helpful literature expert, which helps people with understanding books.
         Please act like you had been given the entire book, not only fragments.
@@ -77,9 +77,7 @@ def initialize_llm_chain() -> RunnableSequence:
         Here is the user's question: {question}.
         """
     )
-    chain = prompt | model
-
-    return chain
+    return prompt_template | model
 
 
 if __name__ == "__main__":
@@ -145,7 +143,7 @@ if __name__ == "__main__":
                 for chunk in assistant_response.split():
                     full_response += chunk + " "
                     time.sleep(0.05)
-                    
+
                     # Add a blinking cursor to simulate typing
                     message_placeholder.markdown(full_response + "▌")
                 message_placeholder.markdown(full_response)
