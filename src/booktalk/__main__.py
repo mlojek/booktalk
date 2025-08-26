@@ -67,15 +67,23 @@ def initialize_llm_chain() -> RunnableSequence:
         RunnableSequence: A runnable LLM chain.
     """
     model = OllamaLLM(model="llama3.2")
-    prompt_template = ChatPromptTemplate.from_template(
-        """
-        You are a helpful literature expert, which helps people with understanding books.
-        Please act like you had been given the entire book, not only fragments.
-        Also please avoid giving your answer as a one, continous block of text.
-        Instead, try to split your answer into a few paragraphs.
-        Here are some relevant fragments from the book: {fragments}.
-        Here is the user's question: {question}.
-        """
+    prompt_template = ChatPromptTemplate(
+        [
+            (
+                "system",
+                "You are a helpful literature expert, Use the provided context to answer\
+                user's question. Act like you had been given the entire book, not only \
+                fragments.",
+            ),
+            (
+                "system",
+                "Context:{fragments}.",
+            ),
+            (
+                "user",
+                "{question}",
+            ),
+        ]
     )
     return prompt_template | model
 
