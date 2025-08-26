@@ -21,7 +21,7 @@ booktalk
 ```
 
 ## Performance
-TODO
+I've tested this using a 3B llama3.2 with 4-bit quantization with satisfactory results. The chatbot answers questions about book's plot correctly and has no issues with hallucinations. Overall the performance is very nice given the low hardware requirements for this project.
 
 ## References
 - Get free public domain EPUBs from Project Gutenberg [here](https://www.gutenberg.org).
