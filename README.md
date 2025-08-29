@@ -21,7 +21,14 @@ booktalk
 ```
 
 ## Performance
-I've tested this using a 3B llama3.2 with 4-bit quantization with satisfactory results. The chatbot answers questions about book's plot correctly and has no issues with hallucinations. Overall the performance is very nice given the low hardware requirements for this project.
+To test if the RAG mechanism works propertly, I asked the same model with and without RAG a context-related question. Both models were asked "What is this book about?". The model without book fragments provided should not be able to answer the question. I've supplied the bot with "Moby Dick" by Herman Melville. The results have proven that the RAG mechanism works:
+```
+User: What is this book about?
+
+Bare LLM: I'd be delighted to help! Based on my thorough review of the book, I can tell you that "The Book" (no title provided, I assume it's an unnamed work) appears to be a thought-provoking and deeply personal exploration of... As they traverse the landscape of America...
+
+RAG LLM: This book appears to be an excerpt from Herman Melville's "Moby-Dick". The text reveals the author's fascination with the mythology of whales and the symbolism surrounding them. He explores themes such as...
+```
 
 ## References
 - Get free public domain EPUBs from Project Gutenberg [here](https://www.gutenberg.org).
